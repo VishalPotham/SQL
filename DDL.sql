@@ -211,6 +211,156 @@ case
     else "Insufficient Balance"
     end
     as Balance_Type from accounts;
+    
+use bankingdb;
+select * from accountbranches;
+desc accountbranches;
+select * from customer;
+set sql_safe_updates=0;
+update customer set email="rushi@gmail.com" where firstname="Rushi";
+update customer set lastname="Kesarkar" where firstname="Tejal";
+insert into customer(customerid, firstname, lastname, email, phone, accountcreation_date)
+    values(7, "Ajay", "Sharma", "ajay@yahoo.com", 8546987125, '2026-6-4'),
+    (8, "Vijay", "Yadav", "vijay@ebay.com", 8546987125, '2026-6-4'),
+    (9, "Sujay", "Prasad", "sujay@gmail.com", 8578151425, '2026-5-12'),
+    (10, "Ram", "Kapoor", "ram@amazon.com", 8955455575, '2026-6-20'),
+    (11, "Shyam", "Sharma", "shyam@yahoo.com", 8546987125, '2026-5-10');
+insert into customer(customerid, firstname, lastname, email, phone, accountcreation_date)
+    values(6, "Jay", "Rathod", "jay@microsoft.com", 8578524555, '2026-7-7');  
+    
+select * from accounts;    
+    insert into accounts(accountid, accounttype, balance, customerid)
+        values(106, "Salary", 56000, 6),
+			  (107, "Savings", 69000, 7),
+              (108, "Salary", 25000, 8),
+              (109, "Current", 42000, 9),
+              (110, "Salary", 7000, 10),
+              (111, "Current", 14000, 11);
+              
+select * from branches;
+alter table branches
+modify branchname varchar(25) default "IT Vedant";  
+desc branches;  
+alter table branches 
+modify branchid int auto_increment;   
+insert into branches(branchaddress, branchphone, courses)
+    values("Kalyan", 7891597535, "Automation Testing"),  
+          ("Pune", 7897844535, "Manual Testing"), 
+          ("Dadar", 9856597535, "C Programming"), 
+          ("Kalyan", 7891558964, "SQL Developer"), 
+          ("Pune", 9045597535, "Gen AI"), 
+          ("Kalyan", 9056477535, "Agentic AI");
+          
+select distinct branchaddress from branches;  
+
+update branches set branchphone=9856597535 where branchaddress="Dadar";  
+update branches set branchphone=8945685275 where branchaddress="Thane";  
+update branches set branchphone=9045597535 where branchaddress="Pune";  
+update branches set branchphone=7891597535 where branchaddress="Kalyan";      
+    
+select * from loans;   
+alter table loans 
+modify loanid int auto_increment primary key; 
+insert into loans(loanamount, interestrate, startdate, enddate)
+    values(340000, 10.00, '2025-8-1', '2026-8-1');
+insert into loans(loanamount, interestrate, startdate, enddate)
+    values(270000, 10.00, '2025-9-1', '2026-9-1'),
+          (140000, 13.33, '2024-6-1', '2025-6-1'),
+          (150000, 12.6, '2024-4-1', '2025-4-1'),
+          (160000, 15.4, '2026-7-1', '2027-7-1'),
+          (172000, 08.44, '2026-3-1', '2027-3-1');
+          
+select * from transactions;
+alter table transactions
+modify transactionid int auto_increment primary key;
+insert into transactions(transactiondate, amount, transactiontype)
+    values('2024-8-4', 3200, "Debit Card"),
+          ('2025-7-4', 5400, "Net Banking"),
+          ('2024-3-4', 420, "UPI"),
+          ('2025-8-3', 330, "UPI"),
+          ('2026-7-5', 770, "Debit Card"),
+          ('2026-5-8', 9910, "Net Banking");
+          
+select * from dr332;
+drop table dr332;
+use bankingdb;
+select * from accountbranches;
+select * from accounts;
+select * from branches;
+select * from customer;
+select * from loans;
+select * from transactions;
+
+# Rank without partition 
+select accountid, balance, rank() over (order by balance desc) from accounts; # 1, 1, 3, 4
+update accounts set balance=69000 where accountid=106;
+select accountid, balance, dense_rank() over (order by balance desc) from accounts; # 1, 1, 2, 3
+
+select loanid, loanamount, rank() over (order by loanamount desc) from loans;  # 1, 1, 3, 4
+select loanid, loanamount, dense_rank() over (order by loanamount desc) from loans; # 1, 1, 2, 3
+
+#Rank with partition
+select accountid, balance, accounttype, 
+rank() over(partition by accounttype order by balance desc) as ranking_with_partition from accounts;
+
+update accounts set balance=25000 where accountid=108;
+select accountid, balance, accounttype,
+dense_rank() over(partition by accounttype order by balance desc) as ranking_with_partition from accounts;
+
+#Percent Rank
+select accountid, balance, accounttype, 
+percent_rank() over(partition by accounttype order by balance desc) as ranking_with_partition from accounts;
+
+#Lead and Lag
+select accountid, balance, lead(balance) over(order by balance desc) as lead_balance from accounts;
+select accountid, balance, lag(balance) over(order by balance desc) as lag_balance from accounts;
+
+#Membership (IN)
+select accountid, accounttype, balance from accounts where accounttype="Savings" or accounttype="Current";
+select accountid, accounttype, balance from accounts where accounttype in("Savings", "Current");
+
+#Window functions - rank(), dense_rank()[partition by, order by], percent_rank(), lead(), lag()
+
+select * from loans;
+#rank, dense rank, percent rank without partition
+select loanid, loanamount, rank() over(order by loanamount desc) as rankings from loans;
+select loanid, loanamount, dense_rank() over(order by loanamount desc) as rankings from loans;
+select loanid, loanamount, percent_rank() over(order by loanamount desc) as rankings from loans;
+
+select * from transactions;
+#rank, dense rank, percent rank with partition
+select transactionid, amount, transactiontype, rank() over(partition by transactiontype order by amount desc) as rankings from transactions;
+select transactionid, amount, transactiontype, dense_rank() over(partition by transactiontype order by amount desc) as rankings from transactions;
+select transactionid, amount, transactiontype, percent_rank() over( partition by transactiontype order by amount desc) as rankings from transactions;
+
+#lead, lag
+select loanid, loanamount, lead(loanamount) over(order by loanamount desc) as lead_amount from loans;
+select loanid, loanamount, lag(loanamount) over(order by loanamount desc) as lag_amount from loans;
+
+#having clause - used with aggregation functions and order by
+
+select * from accounts;
+select min(balance), accounttype from accounts group by accounttype;
+select min(balance), accounttype from accounts group by accounttype order by min(balance) desc;
+
+select min(balance), accounttype from accounts group by accounttype
+having (min(balance)>9000) order by min(balance);
+
+select accounttype from accounts group by accounttype;
+select distinct accounttype from accounts;
+
+select * from transactions;
+select max(amount), transactiontype from transactions group by transactiontype;
+select max(amount), transactiontype from transactions group by transactiontype  order by max(amount) desc;
+select max(amount), transactiontype from transactions group by transactiontype
+having(max(amount)>4000) order by max(amount);
+
+
+
+
+ 
+          
+    
           
           
           
